@@ -28,7 +28,7 @@ flowchart TB
     B -->|matched domains| C[ocproxy<br/>:1081 SOCKS5]
     B -->|other traffic| D[Direct]
     C --> E[openconnect<br/>tun interface]
-    E --> F[(VPN)]
+    E --> F[VPN]
     G[Web UI<br/>:8081 default] -.->|start/stop| E
     H[Heartbeat] -.->|health check| C
 ```
