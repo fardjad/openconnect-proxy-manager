@@ -1,0 +1,22 @@
+name: ocpm
+
+services:
+  ocpm:
+    build: .
+    container_name: ocpm
+    environment:
+      OCPM_SOCKS_PORT: "${OCPM_SOCKS_PORT:-1080}"
+      OCPM_HTTP_PORT: "${OCPM_HTTP_PORT:-8080}"
+      OCPM_WEBUI_PORT: "${OCPM_WEBUI_PORT:-8081}"
+    ports:
+      - "${OCPM_SOCKS_PORT:-1080}:${OCPM_SOCKS_PORT:-1080}"
+      - "${OCPM_HTTP_PORT:-8080}:${OCPM_HTTP_PORT:-8080}"
+      - "${OCPM_WEBUI_PORT:-8081}:${OCPM_WEBUI_PORT:-8081}"
+    env_file: .env
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - ./glider/rules.rule:/etc/ocpm/rules.rule:ro

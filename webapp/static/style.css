@@ -1,0 +1,14 @@
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:system-ui,sans-serif; background:#111; color:#eee; display:flex; justify-content:center; padding:40px 16px; }
+main { max-width:480px; width:100%; }
+h1 { font-size:1.2rem; margin-bottom:24px; }
+.status { display:flex; align-items:center; gap:8px; margin-bottom:20px; }
+.dot { width:12px; height:12px; border-radius:50%; background:var(--status-color, gray); }
+.card { background:#1a1a1a; border-radius:8px; padding:20px; margin-bottom:16px; }
+.btn { display:block; width:100%; padding:12px; border:none; border-radius:6px; font-size:1rem; cursor:pointer; margin-bottom:8px; }
+.btn-connect { background:#2e7d32; color:#fff; }
+.btn-disconnect { background:#c62828; color:#fff; }
+.btn:disabled { opacity:0.4; cursor:default; }
+input { display:block; width:100%; padding:10px; border:1px solid #333; border-radius:6px; background:#222; color:#eee; font-size:1rem; margin-bottom:8px; }
+label { display:block; margin-bottom:4px; font-size:0.85rem; color:#999; }
+.logs { font-family:monospace; font-size:0.75rem; color:#888; max-height:200px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }

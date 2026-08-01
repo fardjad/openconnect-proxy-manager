@@ -1,0 +1,46 @@
+<%
+color_map = {
+    "connected": "green", "waiting_mfa": "orange", "connecting": "orange",
+    "disconnected": "gray", "error": "red",
+}
+status_class = color_map.get(state, "gray")
+state_title = state.replace("_", " ").title()
+mfa_display = "block" if state == "waiting_mfa" else "none"
+logs = "<br>".join(output[-15:]) if output else "\u2014"
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPN Proxy</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main>
+<h1>VPN Proxy</h1>
+<div class="card">
+<div class="status"><div class="dot" style="--status-color:${status_class}"></div><strong id="status-text">${state_title}</strong></div>
+<p style="color:#999;font-size:0.85rem;margin-bottom:12px;" id="status-msg">${state_msg}</p>
+% if show_creds:
+<label for="vpn-user">Username</label>
+<input type="text" id="vpn-user" placeholder="VPN username" autocomplete="off">
+<label for="vpn-pass">Password</label>
+<input type="password" id="vpn-pass" placeholder="VPN password">
+% endif
+<button class="btn btn-connect" id="btn-connect" onclick="connect()">Connect</button>
+<div id="mfa-section" style="display:${mfa_display}">
+<label for="mfa-code">2FA Code</label>
+<input type="text" id="mfa-code" placeholder="Enter 2FA code" autocomplete="off">
+<button class="btn btn-connect" onclick="submitMfa()">Submit 2FA Code</button>
+</div>
+<button class="btn btn-disconnect" id="btn-disconnect" onclick="disconnect()">Disconnect</button>
+</div>
+<div class="card">
+<h2 style="font-size:0.9rem;margin-bottom:8px;color:#999;">Log</h2>
+<div class="logs" id="logs">${logs}</div>
+</div>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

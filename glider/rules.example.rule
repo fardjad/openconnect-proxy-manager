@@ -1,0 +1,4 @@
+# Route your corporate domains through VPN (ocproxy SOCKS)
+# Add one domain= line per domain or subdomain wildcard
+forward=socks5://127.0.0.1:1081
+domain=example.com
