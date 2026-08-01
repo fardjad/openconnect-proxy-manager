@@ -23,8 +23,8 @@ developer tools support HTTP or SOCKS5 proxies.
 ## How It Works
 
 ```mermaid
-flowchart LR
-    A[Browser] --> B["glider<br/>:1080 SOCKS5 default<br/>:8080 HTTP default"]
+flowchart TB
+    A[Browser/tools] --> B["glider<br/>:1080 SOCKS5 default<br/>:8080 HTTP default"]
     B -->|matched domains| C[ocproxy<br/>:1081 SOCKS5]
     B -->|other traffic| D[Direct]
     C --> E[openconnect<br/>tun interface]
