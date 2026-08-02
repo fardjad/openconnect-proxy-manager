@@ -1,0 +1,27 @@
+# Secrets and local environment files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+
+# Git and local metadata
+.git
+.gitignore
+.github
+
+# Python environments, caches, and generated files
+.venv
+**/.venv
+__pycache__
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Local logs and editor files
+*.log
+.DS_Store
+.idea
+.vscode

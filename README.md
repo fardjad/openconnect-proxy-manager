@@ -92,6 +92,41 @@ a default port.
 docker compose up -d
 ```
 
+The web application runs on Python 3.14. The image does not use Ubuntu's Python
+packages: `uv` installs and manages Python 3.14 in the image, then installs the
+locked webapp dependencies from `webapp/uv.lock`.
+
+### Use the Published Image
+
+The public image is available at
+`ghcr.io/fardjad/openconnect-proxy-manager` for `linux/amd64` and
+`linux/arm64`. Tag policy:
+
+- `edge` follows `main` and may change.
+- Releases publish a version tag (for example, `1.2.3`) and `latest`.
+- Deployments should pin an image digest instead of using a moving tag.
+
+After first release, maintainers must change package visibility to **Public** in
+GHCR package settings before unauthenticated pulls work.
+
+To use the published image without changing `compose.yml`, save this as
+`compose.image.yml`:
+
+```yaml
+services:
+  ocpm:
+    image: ghcr.io/fardjad/openconnect-proxy-manager:edge
+```
+
+Run it with:
+
+```bash
+docker compose -f compose.yml -f compose.image.yml up --no-build -d
+```
+
+For deployment, replace `:edge` with the reviewed release tag and digest, for
+example `ghcr.io/fardjad/openconnect-proxy-manager:1.2.3@sha256:<digest>`.
+
 ## Usage
 
 1. Open `http://localhost:8081`, or use your configured `OCPM_WEBUI_PORT`.
