@@ -73,8 +73,7 @@ class VpnManagerTests(unittest.TestCase):
         self.assertEqual(manager.state, vpn.VpnState.WAITING_MFA)
         self.assertEqual(manager.state_msg, "2FA code required")
 
-    @patch("vpn.threading.Thread")
-    def test_submit_mfa_writes_code_and_resumes_connecting(self, thread):
+    def test_submit_mfa_writes_code_and_resumes_connecting(self):
         manager, _ = make_manager()
         process = Mock()
         process.poll.return_value = None
@@ -87,16 +86,41 @@ class VpnManagerTests(unittest.TestCase):
         self.assertEqual(process.stdin.getvalue(), b"123456\n")
         self.assertEqual(manager.state, vpn.VpnState.CONNECTING)
         self.assertEqual(manager.state_msg, "MFA code sent. Waiting for connection\u2026")
-        thread.assert_called_once()
 
     def test_connected_output_updates_state_and_starts_heartbeat(self):
         manager, heartbeat = make_manager()
 
-        manager._read_output(BytesIO(b"Established DTLS connection\n"))
+        manager._read_output(BytesIO(b"Configured as 192.0.2.1, with SSL connected and DTLS disabled\n"))
 
         self.assertEqual(manager.state, vpn.VpnState.CONNECTED)
         self.assertEqual(manager.state_msg, "VPN connected")
         heartbeat.start.assert_called_once_with()
+
+    def test_login_https_and_dtls_messages_do_not_start_heartbeat(self):
+        manager, heartbeat = make_manager()
+        manager.state = vpn.VpnState.CONNECTING
+
+        manager._read_output(BytesIO(
+            b"Connected to HTTPS on vpn.example\nDTLS disabled\nAnswer:\n"
+        ))
+
+        self.assertEqual(manager.state, vpn.VpnState.WAITING_MFA)
+        heartbeat.start.assert_not_called()
+
+    def test_process_exit_updates_state_and_stops_heartbeat(self):
+        manager, heartbeat = make_manager()
+        process = Mock()
+        process.stdout = BytesIO(b"authentication failed\n")
+        process.wait.return_value = 1
+        manager._proc = process
+        manager.state = vpn.VpnState.CONNECTING
+
+        manager._read_output(process.stdout)
+
+        self.assertEqual(manager.state, vpn.VpnState.ERROR)
+        self.assertEqual(manager.state_msg, "openconnect exited with code 1")
+        self.assertIsNone(manager._proc)
+        heartbeat.stop.assert_called_once_with()
 
     def test_disconnect_stops_process_and_heartbeat(self):
         manager, heartbeat = make_manager()

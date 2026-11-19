@@ -3,6 +3,7 @@ import os
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 
 import socks
@@ -10,6 +11,11 @@ import sockshandler
 
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), "vpn_heartbeat")
 FAILURE_THRESHOLD = 3
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 class Heartbeat:
@@ -46,10 +52,16 @@ class Heartbeat:
         handler = sockshandler.SocksiPyHandler(
             socks.SOCKS5, "127.0.0.1", 1081
         )
-        opener = urllib.request.build_opener(handler)
+        opener = urllib.request.build_opener(handler, NoRedirect())
         while self._running:
             try:
-                opener.open(self.url, timeout=10)
+                try:
+                    response = opener.open(self.url, timeout=10)
+                except urllib.error.HTTPError as response:
+                    # Any HTTP response proves the target was reached through the VPN.
+                    response.close()
+                else:
+                    response.close()
                 with open(HEARTBEAT_FILE, "w") as f:
                     f.write(str(time.time()))
                 self.consecutive_failures = 0

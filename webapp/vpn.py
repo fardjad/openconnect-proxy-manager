@@ -2,7 +2,6 @@
 import subprocess
 import signal
 import threading
-import time
 from enum import Enum
 
 
@@ -64,7 +63,6 @@ class VpnManager:
             self._proc.stdin.flush()
             self.state = VpnState.CONNECTING
             self.state_msg = "MFA code sent. Waiting for connection\u2026"
-            threading.Thread(target=self._check_connected, daemon=True).start()
 
     def disconnect(self):
         with self._lock:
@@ -103,22 +101,24 @@ class VpnManager:
             if "Answer:" in text or "credential:" in text or "enter" in text.lower():
                 self.state = VpnState.WAITING_MFA
                 self.state_msg = "2FA code required"
-            if "Connected" in text or "Established" in text or "DTLS" in text:
+            if text.startswith("Configured as "):
                 self._on_connected()
+
+        process = self._proc
+        if process and process.stdout is pipe:
+            returncode = process.wait()
+            with self._lock:
+                if self._proc is process:
+                    self._proc = None
+                    self.heartbeat.stop()
+                    self.state = VpnState.ERROR
+                    self.state_msg = f"openconnect exited with code {returncode}"
 
     def _on_connected(self):
         self.state = VpnState.CONNECTED
         self.state_msg = "VPN connected"
         self.heartbeat.start()
 
-    def _check_connected(self):
-        time.sleep(5)
-        if self._proc and self._proc.poll() is None:
-            self._on_connected()
-        elif self._proc:
-            self.state = VpnState.ERROR
-            self.state_msg = f"openconnect exited with code {self._proc.returncode}"
-            self.heartbeat.stop()
 
     def _on_heartbeat_dead(self):
         self.disconnect()

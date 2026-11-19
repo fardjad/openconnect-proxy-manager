@@ -145,6 +145,13 @@ Test a VPN-routed domain through the selected proxy, then test a non-matching
 domain to confirm that direct routing works. Applications without proxy support
 do not use OCPM automatically.
 
+To monitor VPN reachability, set `HEARTBEAT_URL` to an HTTP or HTTPS endpoint
+reachable through the VPN. OCPM probes it through the VPN SOCKS proxy at
+`HEARTBEAT_INTERVAL` seconds (30 by default). Any HTTP response counts as
+reachable, including errors and redirects; redirects are not followed. Three
+consecutive network failures disconnect the VPN. Omit `HEARTBEAT_URL` to disable
+the heartbeat.
+
 ### 8. Stop or update
 
 ```bash

@@ -1,5 +1,8 @@
 import os
 import tempfile
+import threading
+import urllib.request
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import unittest
 from unittest.mock import Mock, patch
 
@@ -37,6 +40,43 @@ class HeartbeatTests(unittest.TestCase):
                         self.assertTrue(heart.is_alive())
                     with patch.object(heartbeat.os.path, "getmtime", return_value=100):
                         self.assertFalse(heart.is_alive())
+
+    def test_http_redirect_is_reachable_without_following_it(self):
+        requests = []
+
+        class RedirectHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                requests.append(self.path)
+                self.send_response(302)
+                self.send_header("Location", self.path)
+                self.end_headers()
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), RedirectHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(thread.join)
+        self.addCleanup(server.shutdown)
+        heart = self.make_heartbeat(url=f"http://127.0.0.1:{server.server_port}/")
+        heart._running = True
+        heart.consecutive_failures = 2
+        callback = Mock()
+        heart.on_dead(callback)
+
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(os.environ, {"no_proxy": "*", "NO_PROXY": "*"}), \
+             patch.object(heartbeat, "HEARTBEAT_FILE", os.path.join(directory, "heartbeat")), \
+             patch.object(heartbeat.sockshandler, "SocksiPyHandler", return_value=urllib.request.BaseHandler()), \
+             patch.object(heartbeat.time, "sleep", side_effect=lambda _: setattr(heart, "_running", False)):
+            heart._loop()
+            self.assertTrue(heart.is_alive())
+
+        self.assertEqual(requests, ["/"])
+        self.assertEqual(heart.consecutive_failures, 0)
+        callback.assert_not_called()
 
     def test_failure_threshold_calls_dead_callback(self):
         heart = self.make_heartbeat()
